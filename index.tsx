@@ -218,15 +218,15 @@ const DocumentManager = ({ savedPlaafps, currentId, onSave, onLoad, onNew, onDel
 
 
 const App: React.FC = () => {
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const [data, setData] = useState<PlaafpData>(initialPlaafpData);
+  const [apiKey, setApiKey] = useState(null);
+  const [data, setData] = useState(initialPlaafpData);
   const [currentStep, setCurrentStep] = useState(0);
-  const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
-  const [activeField, setActiveField] = useState<{ field: string; label: string; academicIndex?: number; summaryIndex?: number } | null>(null);
+  const [loadingMessage, setLoadingMessage] = useState(null);
+  const [activeField, setActiveField] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
-  const [savedPlaafps, setSavedPlaafps] = useState<Record<string, PlaafpData>>({});
-  const [currentPlaafpId, setCurrentPlaafpId] = useState<string | null>(null);
+  const [savedPlaafps, setSavedPlaafps] = useState({});
+  const [currentPlaafpId, setCurrentPlaafpId] = useState(null);
 
   useEffect(() => {
     const savedKey = localStorage.getItem('gemini-api-key');
