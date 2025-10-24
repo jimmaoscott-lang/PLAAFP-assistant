@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI } from '@google/genai';
@@ -154,8 +153,7 @@ const App = () => {
   const [activeField, setActiveField] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
-  // FIX: Explicitly type savedPlaafps state to avoid errors when accessing properties on 'unknown' type.
-  const [savedPlaafps, setSavedPlaafps] = useState<Record<string, any>>({});
+  const [savedPlaafps, setSavedPlaafps] = useState({});
   const [currentPlaafpId, setCurrentPlaafpId] = useState(null);
 
   useEffect(() => {
@@ -365,11 +363,11 @@ const App = () => {
       if (extractedText && !extractedText.toLowerCase().includes("information not found")) {
          if (activeField.academicIndex !== undefined) {
             const newSections = [...data.academicSections];
-            newSections[activeField.academicIndex] = { ...newSections[activeField.academicIndex], [activeField.field]: extractedText };
+            newSections[activeField.academicIndex][activeField.field] = extractedText;
             setData(prev => ({ ...prev, academicSections: newSections }));
          } else if (activeField.summaryIndex !== undefined) {
             const newSections = [...data.performanceSummarySections];
-            newSections[activeField.summaryIndex] = { ...newSections[activeField.summaryIndex], [activeField.field]: extractedText };
+            newSections[activeField.summaryIndex][activeField.field] = extractedText;
             setData(prev => ({ ...prev, performanceSummarySections: newSections }));
          } else {
             setData(prev => ({ ...prev, [activeField.field]: extractedText }));
@@ -397,12 +395,10 @@ const App = () => {
         let changed = false;
 
         fields.forEach(fieldElement => {
-            // FIX: Cast element to HTMLElement to access dataset and innerText properties.
-            const fieldEl = fieldElement as HTMLElement;
-            const field = fieldEl.dataset.field;
-            const indexStr = fieldEl.dataset.index;
-            const sectionType = fieldEl.dataset.sectionType;
-            const value = fieldEl.innerText;
+            const field = fieldElement.dataset.field;
+            const indexStr = fieldElement.dataset.index;
+            const sectionType = fieldElement.dataset.sectionType;
+            const value = fieldElement.innerText;
 
             if (!field) return;
 
@@ -510,20 +506,7 @@ const SuggestionModal = ({ isOpen, onClose, title, content }) => {
   );
 };
 
-// FIX: Add explicit types for FormInput props to make academicIndex, summaryIndex, and placeholder optional, resolving multiple errors.
-const FormInput = ({ name, label, value, onChange, onFocus, getSuggestion, type = 'text', rows = 3, academicIndex, summaryIndex, placeholder }: {
-    name: any,
-    label: any,
-    value: any,
-    onChange: any,
-    onFocus: any,
-    getSuggestion: any,
-    type?: string,
-    rows?: number,
-    academicIndex?: number,
-    summaryIndex?: number,
-    placeholder?: string
-}) => (
+const FormInput = ({ name, label, value, onChange, onFocus, getSuggestion, type = 'text', rows = 3, academicIndex, summaryIndex, placeholder }) => (
   <div className="form-group">
     <label htmlFor={name}>{label}</label>
     <div className="input-wrapper">
@@ -676,7 +659,6 @@ const ImageExtractor = ({ onImagePaste, isActive }) => {
         event.preventDefault();
         const reader = new FileReader();
         reader.onload = (e) => {
-          // FIX: Add type guard to ensure result is a string before calling .split().
           if (e.target?.result && typeof e.target.result === 'string') {
             const base64 = (e.target.result).split(',')[1];
             onImagePaste(base64, file.type);
@@ -708,8 +690,7 @@ const Preview = ({ data, onEdit }) => {
 
     const generatePreviewHtml = useCallback((data) => {
         const sanitize = (str) => str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-        // FIX: Add default values for sectionType and index to make them optional, fixing argument count errors.
+        
         const editableSpan = (field, value, sectionType = undefined, index = undefined) => {
             const indexAttr = index !== undefined ? `data-index="${index}"` : '';
             const sectionAttr = sectionType ? `data-section-type="${sectionType}"` : '';
