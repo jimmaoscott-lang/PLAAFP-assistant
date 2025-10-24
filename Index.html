@@ -519,9 +519,12 @@
   }
 }
 </script>
+<!-- This is the 'translator' script that allows the browser to understand TSX -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <!-- The type is changed to "text/babel" to tell the translator to run -->
+    <script type="text/babel" data-type="module" src="index.tsx"></script>
   </body>
 </html>
