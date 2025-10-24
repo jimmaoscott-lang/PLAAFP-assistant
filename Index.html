@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PLAAFP AI Assistant</title>
+    <style>
+      :root {
+        --primary-color: #4a90e2;
+        --secondary-color: #f5f7fa;
+        --text-color: #333;
+        --border-color: #dce1e6;
+        --background-color: #ffffff;
+        --header-height: 60px;
+        --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          Helvetica, Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: var(--font-family);
+        background-color: var(--secondary-color);
+        color: var(--text-color);
+        line-height: 1.6;
+      }
+
+      #root {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+
+      .app-header {
+        height: var(--header-height);
+        background-color: var(--primary-color);
+        color: white;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        padding: 0 2rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+      }
+
+      .app-header h1 {
+        font-size: 1.5rem;
+        justify-self: start;
+      }
+
+      .clear-btn {
+        background-color: #e94f37;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.2s;
+        justify-self: end;
+      }
+
+      .clear-btn:hover {
+        background-color: #c83e2a;
+      }
+
+      .main-content {
+        display: flex;
+        flex-grow: 1;
+        overflow: hidden;
+      }
+
+      .form-container {
+        flex: 1;
+        padding: 1.5rem;
+        overflow-y: auto;
+        background-color: var(--background-color);
+        border-right: 1px solid var(--border-color);
+      }
+
+      .preview-container {
+        flex: 1;
+        padding: 1.5rem;
+        overflow-y: auto;
+        background-color: var(--secondary-color);
+      }
+      
+      .preview-content {
+        background-color: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        white-space: normal;
+        font-family: 'Times New Roman', serif;
+        font-size: 12pt;
+        line-height: 1.5;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      
+      .preview-content p {
+        margin: 0 0 1em 0;
+      }
+
+      .preview-content strong {
+        display: block;
+        margin: 1.2em 0 0.2em 0;
+      }
+
+      .preview-content strong:first-child {
+        margin-top: 0;
+      }
+
+      .preview-content[contenteditable="true"]:focus-within {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
+      }
+      
+      .editable-field {
+        display: inline-block;
+        padding: 1px 3px;
+        border-radius: 3px;
+        transition: background-color 0.2s;
+        min-width: 5px;
+        min-height: 1em;
+      }
+
+      .editable-field:hover {
+        background-color: #e1edff; /* Light blue */
+        cursor: text;
+      }
+
+      .stepper {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .step {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-size: 1rem;
+        color: var(--text-color);
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+      }
+
+      .step.active {
+        color: var(--primary-color);
+        border-bottom-color: var(--primary-color);
+        font-weight: bold;
+      }
+
+      .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background-color: #fff;
+      }
+      
+      .form-section h2 {
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--primary-color);
+      }
+
+      .form-group {
+        margin-bottom: 1rem;
+      }
+
+      .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+      }
+      
+      .input-wrapper {
+        position: relative;
+      }
+
+      input[type='text'],
+      textarea,
+      select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        font-size: 1rem;
+        font-family: var(--font-family);
+      }
+      
+      textarea {
+        min-height: 100px;
+        resize: vertical;
+      }
+
+      .suggestion-btn {
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        color: #aaa;
+        transition: color 0.2s;
+      }
+
+      .suggestion-btn:hover {
+        color: var(--primary-color);
+      }
+
+      .add-section-btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.2s;
+        margin-top: 1rem;
+      }
+      
+      .add-section-btn:hover {
+        opacity: 0.9;
+      }
+      
+      .academic-section {
+        padding: 1rem;
+        border: 1px dashed var(--border-color);
+        border-radius: 5px;
+        margin-top: 1rem;
+      }
+
+      .image-extractor {
+        margin-top: 1.5rem;
+        padding: 1.5rem;
+        border: 2px dashed var(--primary-color);
+        border-radius: 8px;
+        text-align: center;
+        background-color: #f0f6ff;
+        color: var(--primary-color);
+      }
+
+      .image-extractor.active {
+        background-color: #e1edff;
+      }
+
+      .image-extractor h3 {
+        margin-bottom: 0.5rem;
+      }
+      
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        color: white;
+        font-size: 1.5rem;
+      }
+
+      .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top: 4px solid #fff;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin-right: 1rem;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      /* Modal Styles */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1001;
+      }
+
+      .modal-content {
+        background: white;
+        padding: 1.5rem 2rem;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+      }
+      
+      .modal-header h3 {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+      }
+      
+      .modal-close-btn {
+        background: none;
+        border: none;
+        font-size: 2rem;
+        cursor: pointer;
+        color: #aaa;
+        line-height: 1;
+      }
+      
+      .modal-body {
+        overflow-y: auto;
+        flex-grow: 1;
+      }
+
+      .modal-body p {
+        margin-bottom: 0.5rem;
+      }
+
+      .modal-body strong {
+        color: var(--primary-color);
+      }
+
+      .api-key-modal .modal-body {
+        text-align: center;
+      }
+
+      .api-key-modal p {
+        margin-bottom: 1rem;
+      }
+
+      .api-key-modal a {
+        display: inline-block;
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+        font-weight: bold;
+      }
+
+      .api-key-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        margin-bottom: 1rem;
+        font-size: 1rem;
+      }
+
+      .api-key-save-btn {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: #4CAF50; /* Green */
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .api-key-save-btn:hover {
+        background-color: #45a049;
+      }
+      
+      .api-key-note {
+        margin-top: 1rem;
+        font-size: 0.85rem;
+        color: #666;
+      }
+      
+      /* Document Manager Styles */
+      .doc-manager {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        justify-self: center;
+      }
+
+      .doc-save-btn {
+        background-color: #4CAF50; /* Green */
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.2s;
+      }
+
+      .doc-save-btn:hover {
+        background-color: #45a049;
+      }
+
+      .doc-dropdown-container {
+        position: relative;
+      }
+
+      .doc-current {
+        background-color: transparent;
+        border: 1px solid white;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        min-width: 250px;
+        text-align: left;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .doc-dropdown-menu {
+        position: absolute;
+        top: 110%;
+        left: 0;
+        background-color: white;
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        z-index: 10;
+        width: 100%;
+        max-height: 300px;
+        overflow-y: auto;
+        color: var(--text-color);
+      }
+
+      .doc-item-container {
+        display: flex;
+        align-items: center;
+      }
+
+      .doc-item {
+        flex-grow: 1;
+        text-align: left;
+        padding: 0.75rem 1rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .doc-item:hover {
+        background-color: var(--secondary-color);
+      }
+
+      .doc-new {
+        font-weight: bold;
+        color: var(--primary-color);
+      }
+
+      .doc-item-empty {
+        padding: 0.75rem 1rem;
+        color: #999;
+      }
+
+      .doc-dropdown-menu hr {
+        border: none;
+        border-top: 1px solid var(--border-color);
+        margin: 0.25rem 0;
+      }
+
+      .doc-delete-btn {
+        background: none;
+        border: none;
+        color: #e94f37;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0 1rem;
+        font-weight: bold;
+      }
+
+      .doc-delete-btn:hover {
+        color: #c83e2a;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.25.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
