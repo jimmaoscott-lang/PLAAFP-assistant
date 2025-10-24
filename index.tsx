@@ -1,86 +1,15 @@
+
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { GoogleGenAI, GenerateContentResponse } from '@google/genai';
-
-// --- INTERFACES ---
-interface AcademicSection {
-  id: string;
-  subject: string;
-  staarProficient: string;
-  staarDeficits: string;
-  progressDataSources: string[];
-  currentData: string;
-  performanceComparison: string;
-  noProgressReason: string;
-  readingFluency: string;
-  readingComprehension: string;
-  mathProblemSolving: string;
-  supportsPerformance: string;
-  classroomStrengths: string;
-  classroomDeficits: string;
-  deficitsEvidence: string;
-  withSupports: string;
-  withoutSupports: string;
-  peerComparisonGradeLevel: string;
-  peerComparisonStudent: string;
-  benchmarkPercentile: string;
-  peerBenchmarkPercentile: string;
-  strengthsDespiteDeficits: string;
-  criticalNeeds: string;
-  independentAccessImpact: string;
-}
-
-interface PerformanceSummarySection {
-  id: string;
-  subject: string;
-  passedStateAssessment: 'passed' | 'did not pass' | '';
-  taksScore: string;
-  rawScore: string;
-  percentCorrect: string;
-  gradeInSubject: string;
-  accommodations: string;
-  needs: string;
-  receivesSpecialEdSupport: 'receives' | 'does not receive' | '';
-  strengths: string;
-}
-
-interface PlaafpData {
-  studentName: string;
-  grade: string;
-  disabilities: string;
-  subjects: string;
-  cognitiveDeficits: string;
-  academicDeficits: string;
-  disabilityImpact: string;
-  deficitType: string;
-  specialEdSupport: string;
-  relatedServices: string;
-  accommodations: string;
-  academicSections: AcademicSection[];
-  performanceSummarySections: PerformanceSummarySection[];
-  functionalStrengths: string;
-  functionalDeficits: string;
-  functionalDataSource: string;
-  functionalImpact: string;
-  transitionStrengths: string;
-  transitionSupportNeeds: string;
-  transitionIndependentLiving: string;
-  transitionSchedules: string;
-  transitionResponsibility: string;
-  transitionParticipation: string;
-  transitionEmploymentGoal: string;
-  parentEmploymentPlan: string;
-  parentEmploymentGoal: string;
-  parentLivingPlan: string;
-  parentName: string;
-}
+import { GoogleGenAI } from '@google/genai';
 
 // --- CONSTANTS ---
 const STEPS = ['Introductory', 'Academics', 'Functional', 'Transition', 'Summary'];
 
 const FAKE_STUDENT_NAMES = ['Student Alpha', 'Student Beta', 'Student Gamma', 'Student Delta', 'Student Epsilon'];
 
-const initialAcademicSection: Omit<AcademicSection, 'id'> = {
+const initialAcademicSection = {
   subject: '', staarProficient: '', staarDeficits: '',
   progressDataSources: [], currentData: '', performanceComparison: '',
   noProgressReason: '', readingFluency: '', readingComprehension: '',
@@ -91,14 +20,14 @@ const initialAcademicSection: Omit<AcademicSection, 'id'> = {
   strengthsDespiteDeficits: '', criticalNeeds: '', independentAccessImpact: '',
 };
 
-const initialPerformanceSummarySection: Omit<PerformanceSummarySection, 'id'> = {
+const initialPerformanceSummarySection = {
   subject: '', passedStateAssessment: '', taksScore: '', rawScore: '',
   percentCorrect: '', gradeInSubject: '', accommodations: '', needs: '',
   receivesSpecialEdSupport: '', strengths: ''
 };
 
 
-const initialPlaafpData: PlaafpData = {
+const initialPlaafpData = {
   studentName: '', grade: '', disabilities: '', subjects: '',
   cognitiveDeficits: '', academicDeficits: '', disabilityImpact: '',
   deficitType: '', specialEdSupport: '', relatedServices: '',
@@ -112,12 +41,12 @@ const initialPlaafpData: PlaafpData = {
 };
 
 // --- HELPER FUNCTIONS ---
-const fill = (value: string, placeholder: string) => value?.trim() ? value.trim() : `(${placeholder})`;
-const fillPronoun = (studentName: string, pronoun: string) => studentName?.trim() ? pronoun : 'he/she';
-const fillPossessive = (studentName: string, pronoun: string) => studentName?.trim() ? `${studentName}'s` : `______'s`;
+const fill = (value, placeholder) => value?.trim() ? value.trim() : `(${placeholder})`;
+const fillPronoun = (studentName, pronoun) => studentName?.trim() ? pronoun : 'he/she';
+const fillPossessive = (studentName, pronoun) => studentName?.trim() ? `${studentName}'s` : `______'s`;
 
 // --- REACT COMPONENTS ---
-const ApiKeyModal = ({ onSave }: { onSave: (key: string) => void }) => {
+const ApiKeyModal = ({ onSave }) => {
   const [apiKey, setApiKey] = useState('');
 
   const handleSave = () => {
@@ -159,14 +88,14 @@ const ApiKeyModal = ({ onSave }: { onSave: (key: string) => void }) => {
   );
 };
 
-const DocumentManager = ({ savedPlaafps, currentId, onSave, onLoad, onNew, onDelete }: { savedPlaafps: Record<string, PlaafpData>, currentId: string | null, onSave: () => void, onLoad: (id: string) => void, onNew: () => void, onDelete: (id: string) => void}) => {
+const DocumentManager = ({ savedPlaafps, currentId, onSave, onLoad, onNew, onDelete }) => {
     const currentDocName = currentId && savedPlaafps[currentId] ? savedPlaafps[currentId].studentName : "New Document";
     const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
+    const dropdownRef = useRef(null);
 
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && event.target instanceof Node && !dropdownRef.current.contains(event.target)) {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsOpen(false);
             }
         };
@@ -176,7 +105,7 @@ const DocumentManager = ({ savedPlaafps, currentId, onSave, onLoad, onNew, onDel
         };
     }, [dropdownRef]);
 
-    const handleSelect = (id: string) => {
+    const handleSelect = (id) => {
         onLoad(id);
         setIsOpen(false);
     }
@@ -217,7 +146,7 @@ const DocumentManager = ({ savedPlaafps, currentId, onSave, onLoad, onNew, onDel
 };
 
 
-const App: React.FC = () => {
+const App = () => {
   const [apiKey, setApiKey] = useState(null);
   const [data, setData] = useState(initialPlaafpData);
   const [currentStep, setCurrentStep] = useState(0);
@@ -225,7 +154,8 @@ const App: React.FC = () => {
   const [activeField, setActiveField] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
-  const [savedPlaafps, setSavedPlaafps] = useState({});
+  // FIX: Explicitly type savedPlaafps state to avoid errors when accessing properties on 'unknown' type.
+  const [savedPlaafps, setSavedPlaafps] = useState<Record<string, any>>({});
   const [currentPlaafpId, setCurrentPlaafpId] = useState(null);
 
   useEffect(() => {
@@ -259,7 +189,7 @@ const App: React.FC = () => {
     }
   }, [apiKey]);
 
-  const handleSaveApiKey = (key: string) => {
+  const handleSaveApiKey = (key) => {
     localStorage.setItem('gemini-api-key', key);
     setApiKey(key);
   };
@@ -272,12 +202,12 @@ const App: React.FC = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAcademicChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleAcademicChange = (index, e) => {
     const { name, value } = e.target;
     const newSections = [...data.academicSections];
     newSections[index] = { ...newSections[index], [name]: value };
@@ -291,7 +221,7 @@ const App: React.FC = () => {
     }));
   };
 
-  const handlePerformanceSummaryChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handlePerformanceSummaryChange = (index, e) => {
     const { name, value } = e.target;
     const newSections = [...data.performanceSummarySections];
     newSections[index] = { ...newSections[index], [name]: value };
@@ -335,7 +265,7 @@ const App: React.FC = () => {
     setCurrentStep(0);
   };
   
-  const handleLoad = (id: string) => {
+  const handleLoad = (id) => {
     if (savedPlaafps[id]) {
         setData(savedPlaafps[id]);
         setCurrentPlaafpId(id);
@@ -345,7 +275,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id) => {
     if (!window.confirm(`Are you sure you want to delete the document for "${savedPlaafps[id].studentName}"? This cannot be undone.`)) {
         return;
     }
@@ -360,7 +290,7 @@ const App: React.FC = () => {
   };
 
 
-  const getSuggestion = async (field: string, label: string) => {
+  const getSuggestion = async (field, label) => {
     if (!apiKey) return;
     setLoadingMessage(`Getting suggestion for ${label}...`);
     try {
@@ -398,7 +328,7 @@ const App: React.FC = () => {
     }
   };
   
-  const extractFromImage = async (base64Image: string, mimeType: string) => {
+  const extractFromImage = async (base64Image, mimeType) => {
     if (!apiKey) return;
     if (!activeField) {
       setModalContent({ title: 'No Field Selected', content: "Please click on a text field before pasting an image." });
@@ -457,35 +387,37 @@ const App: React.FC = () => {
     }
   };
   
-  const handlePreviewEdit = useCallback((html: string) => {
+  const handlePreviewEdit = useCallback((html) => {
     const parserDiv = document.createElement('div');
     parserDiv.innerHTML = html;
 
     setData(currentData => {
-        const newData: PlaafpData = JSON.parse(JSON.stringify(currentData));
-        const fields = parserDiv.querySelectorAll<HTMLElement>('.editable-field[data-field]');
+        const newData = JSON.parse(JSON.stringify(currentData));
+        const fields = parserDiv.querySelectorAll('.editable-field[data-field]');
         let changed = false;
 
         fields.forEach(fieldElement => {
-            const field = fieldElement.dataset.field;
-            const indexStr = fieldElement.dataset.index;
-            const sectionType = fieldElement.dataset.sectionType;
-            const value = fieldElement.innerText;
+            // FIX: Cast element to HTMLElement to access dataset and innerText properties.
+            const fieldEl = fieldElement as HTMLElement;
+            const field = fieldEl.dataset.field;
+            const indexStr = fieldEl.dataset.index;
+            const sectionType = fieldEl.dataset.sectionType;
+            const value = fieldEl.innerText;
 
             if (!field) return;
 
             if (indexStr !== undefined) {
                 const index = parseInt(indexStr, 10);
-                if (sectionType === 'academic' && newData.academicSections[index] && (newData.academicSections[index] as any)[field] !== value) {
-                    (newData.academicSections[index] as any)[field] = value;
+                if (sectionType === 'academic' && newData.academicSections[index] && newData.academicSections[index][field] !== value) {
+                    newData.academicSections[index][field] = value;
                     changed = true;
-                } else if (sectionType === 'summary' && newData.performanceSummarySections[index] && (newData.performanceSummarySections[index] as any)[field] !== value) {
-                    (newData.performanceSummarySections[index] as any)[field] = value;
+                } else if (sectionType === 'summary' && newData.performanceSummarySections[index] && newData.performanceSummarySections[index][field] !== value) {
+                    newData.performanceSummarySections[index][field] = value;
                     changed = true;
                 }
             } else {
-                if ((newData as any)[field] !== value) {
-                    (newData as any)[field] = value;
+                if (newData[field] !== value) {
+                    newData[field] = value;
                     changed = true;
                 }
             }
@@ -555,7 +487,7 @@ const App: React.FC = () => {
   );
 };
 
-const SuggestionModal = ({ isOpen, onClose, title, content }: {isOpen: boolean, onClose: () => void, title: string, content: string}) => {
+const SuggestionModal = ({ isOpen, onClose, title, content }) => {
   if (!isOpen) return null;
 
   const formattedContent = content.split('\n').map((line, i) => {
@@ -578,21 +510,34 @@ const SuggestionModal = ({ isOpen, onClose, title, content }: {isOpen: boolean, 
   );
 };
 
-const FormInput = ({ name, label, value, onChange, onFocus, getSuggestion, type = 'text', rows = 3, academicIndex, summaryIndex }: any) => (
+// FIX: Add explicit types for FormInput props to make academicIndex, summaryIndex, and placeholder optional, resolving multiple errors.
+const FormInput = ({ name, label, value, onChange, onFocus, getSuggestion, type = 'text', rows = 3, academicIndex, summaryIndex, placeholder }: {
+    name: any,
+    label: any,
+    value: any,
+    onChange: any,
+    onFocus: any,
+    getSuggestion: any,
+    type?: string,
+    rows?: number,
+    academicIndex?: number,
+    summaryIndex?: number,
+    placeholder?: string
+}) => (
   <div className="form-group">
     <label htmlFor={name}>{label}</label>
     <div className="input-wrapper">
       {type === 'textarea' ? (
-        <textarea id={name} name={name} value={value} onChange={onChange} onFocus={() => onFocus({ field: name, label, academicIndex, summaryIndex })} rows={rows} />
+        <textarea id={name} name={name} value={value} onChange={onChange} onFocus={() => onFocus({ field: name, label, academicIndex, summaryIndex })} rows={rows} placeholder={placeholder} />
       ) : (
-        <input type={type} id={name} name={name} value={value} onChange={onChange} onFocus={() => onFocus({ field: name, label, academicIndex, summaryIndex })} />
+        <input type={type} id={name} name={name} value={value} onChange={onChange} onFocus={() => onFocus({ field: name, label, academicIndex, summaryIndex })} placeholder={placeholder} />
       )}
       <button className="suggestion-btn" title="Get AI Suggestion" onClick={() => getSuggestion(name, label)}>✨</button>
     </div>
   </div>
 );
 
-const IntroStep = ({ data, handleChange, getSuggestion, setActiveField }: {data: PlaafpData, handleChange: any, getSuggestion: any, setActiveField: any}) => (
+const IntroStep = ({ data, handleChange, getSuggestion, setActiveField }) => (
   <div className="form-section">
     <h2>Introductory Paragraph</h2>
     <div className="form-group">
@@ -632,7 +577,7 @@ const IntroStep = ({ data, handleChange, getSuggestion, setActiveField }: {data:
   </div>
 );
 
-const AcademicsStep = ({ data, handleAcademicChange, handleAddAcademicSection, getSuggestion, setActiveField }: {data: PlaafpData, handleAcademicChange: any, handleAddAcademicSection: any, getSuggestion: any, setActiveField: any}) => (
+const AcademicsStep = ({ data, handleAcademicChange, handleAddAcademicSection, getSuggestion, setActiveField }) => (
   <div className="form-section">
     <h2>Academics</h2>
     {data.academicSections.map((section, index) => (
@@ -654,7 +599,7 @@ const AcademicsStep = ({ data, handleAcademicChange, handleAddAcademicSection, g
   </div>
 );
 
-const PerformanceSummaryStep = ({ data, handlePerformanceSummaryChange, handleAddPerformanceSummarySection, getSuggestion, setActiveField }: {data: PlaafpData, handlePerformanceSummaryChange: any, handleAddPerformanceSummarySection: any, getSuggestion: any, setActiveField: any}) => (
+const PerformanceSummaryStep = ({ data, handlePerformanceSummaryChange, handleAddPerformanceSummarySection, getSuggestion, setActiveField }) => (
     <div className="form-section">
       <h2>Summary of Performance</h2>
       {data.performanceSummarySections.map((section, index) => (
@@ -690,7 +635,7 @@ const PerformanceSummaryStep = ({ data, handlePerformanceSummaryChange, handleAd
     </div>
 );
 
-const FunctionalStep = ({ data, handleChange, getSuggestion, setActiveField }: {data: PlaafpData, handleChange: any, getSuggestion: any, setActiveField: any}) => (
+const FunctionalStep = ({ data, handleChange, getSuggestion, setActiveField }) => (
     <div className="form-section">
       <h2>Functional</h2>
       <FormInput name="functionalDataSource" label="Data Source(s)" value={data.functionalDataSource} onChange={handleChange} onFocus={setActiveField} getSuggestion={getSuggestion} placeholder="e.g., teacher information, informal observation, checklists"/>
@@ -700,7 +645,7 @@ const FunctionalStep = ({ data, handleChange, getSuggestion, setActiveField }: {
     </div>
 );
 
-const TransitionStep = ({ data, handleChange, getSuggestion, setActiveField }: {data: PlaafpData, handleChange: any, getSuggestion: any, setActiveField: any}) => (
+const TransitionStep = ({ data, handleChange, getSuggestion, setActiveField }) => (
     <div className="form-section">
       <h2>Transition (Secondary)</h2>
       <FormInput name="transitionStrengths" label="Strengths (Life Skills, Community)" value={data.transitionStrengths} onChange={handleChange} onFocus={setActiveField} getSuggestion={getSuggestion} />
@@ -715,15 +660,15 @@ const TransitionStep = ({ data, handleChange, getSuggestion, setActiveField }: {
     </div>
 );
 
-const LoadingOverlay = ({ message }: { message: string }) => (
+const LoadingOverlay = ({ message }) => (
   <div className="loading-overlay">
     <div className="spinner"></div>
     <span>{message}</span>
   </div>
 );
 
-const ImageExtractor = ({ onImagePaste, isActive }: { onImagePaste: (base64: string, mimeType: string) => void; isActive: boolean }) => {
-  const handlePaste = useCallback((event: ClipboardEvent) => {
+const ImageExtractor = ({ onImagePaste, isActive }) => {
+  const handlePaste = useCallback((event) => {
     const items = event.clipboardData?.files;
     if (items && items.length > 0) {
       const file = items[0];
@@ -731,8 +676,11 @@ const ImageExtractor = ({ onImagePaste, isActive }: { onImagePaste: (base64: str
         event.preventDefault();
         const reader = new FileReader();
         reader.onload = (e) => {
-          const base64 = (e.target?.result as string).split(',')[1];
-          onImagePaste(base64, file.type);
+          // FIX: Add type guard to ensure result is a string before calling .split().
+          if (e.target?.result && typeof e.target.result === 'string') {
+            const base64 = (e.target.result).split(',')[1];
+            onImagePaste(base64, file.type);
+          }
         };
         reader.readAsDataURL(file);
       }
@@ -755,13 +703,14 @@ const ImageExtractor = ({ onImagePaste, isActive }: { onImagePaste: (base64: str
 };
 
 
-const Preview = ({ data, onEdit }: { data: PlaafpData, onEdit: (html: string) => void }) => {
-    const previewRef = useRef<HTMLDivElement>(null);
+const Preview = ({ data, onEdit }) => {
+    const previewRef = useRef(null);
 
-    const generatePreviewHtml = useCallback((data: PlaafpData): string => {
-        const sanitize = (str: string) => str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const generatePreviewHtml = useCallback((data) => {
+        const sanitize = (str) => str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-        const editableSpan = (field: string, value: string, sectionType?: 'academic' | 'summary', index?: number) => {
+        // FIX: Add default values for sectionType and index to make them optional, fixing argument count errors.
+        const editableSpan = (field, value, sectionType = undefined, index = undefined) => {
             const indexAttr = index !== undefined ? `data-index="${index}"` : '';
             const sectionAttr = sectionType ? `data-section-type="${sectionType}"` : '';
             const sanitizedValue = sanitize(value);
@@ -771,7 +720,7 @@ const Preview = ({ data, onEdit }: { data: PlaafpData, onEdit: (html: string) =>
         const studentName = data.studentName || '______ (student name)';
         const parentName = data.parentName || '______ (parent name)';
         
-        const htmlParts: string[] = [];
+        const htmlParts = [];
         
         htmlParts.push(`<strong>Introductory Paragraph</strong>`);
         htmlParts.push(`<p>${editableSpan('studentName', studentName)} is a ${editableSpan('grade', fill(data.grade, 'grade'))} grade student diagnosed with a ${editableSpan('disabilities', fill(data.disabilities, 'disability(ies)'))} disability(ies). ${sanitize(studentName)} is currently receiving enrolled grade-level instruction in ${editableSpan('subjects', fill(data.subjects, 'subjects/courses'))} in the general education classroom. ${sanitize(fillPossessive(data.studentName, studentName))} full individual evaluation indicates that ${fillPronoun(data.studentName, 'he/she')} has cognitive deficits in ${editableSpan('cognitiveDeficits', fill(data.cognitiveDeficits, 'cognitive areas'))} and academic deficits in ${editableSpan('academicDeficits', fill(data.academicDeficits, 'academic areas'))}.</p>`);
@@ -812,7 +761,7 @@ const Preview = ({ data, onEdit }: { data: PlaafpData, onEdit: (html: string) =>
         }
     }, [html]);
     
-    const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+    const handleBlur = (e) => {
         if (onEdit && e.currentTarget.innerHTML !== html) {
             onEdit(e.currentTarget.innerHTML);
         }
@@ -831,5 +780,6 @@ const Preview = ({ data, onEdit }: { data: PlaafpData, onEdit: (html: string) =>
 };
 
 
-const root = createRoot(document.getElementById('root')!);
+const root = createRoot(document.getElementById('root'));
 root.render(<App />);
+
